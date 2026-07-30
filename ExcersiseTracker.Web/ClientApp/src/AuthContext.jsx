@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import getAxios from '../AuthAxios';
+import getAxios from './AuthAxios'; 
 
 const AuthContext = createContext();
 
