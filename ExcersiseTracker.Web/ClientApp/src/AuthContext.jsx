@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import getAxios from './AuthAxios'; 
 
-const AuthContext = createContext();
+const AuthContext = createContext({ user: null, setUser: () => { } });
 
 const AuthContextComponent = ({ children }) => {
 

@@ -42,15 +42,29 @@ namespace ExcersiseTracker.Web.Controllers
                 return Unauthorized();
             }
 
+            // validate secret exists
+            var secret = _configuration.GetValue<string>("JWTSecret");
+            if (string.IsNullOrWhiteSpace(secret))
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { error = "Server not configured for authentication." });
+            }
+
             var claims = new List<Claim>()
             {
-                new Claim(ClaimTypes.Email, viewModel.Email)
+                new Claim(ClaimTypes.Email, viewModel.Email),
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
             };
 
-            var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration.GetValue<string>("JWTSecret")));
+            var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
             var credentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
-            var tokenOptions = new JwtSecurityToken(signingCredentials: credentials,
-                claims: claims);
+
+            // include expiry
+            var tokenOptions = new JwtSecurityToken(
+                claims: claims,
+                expires: DateTime.UtcNow.AddHours(8),
+                signingCredentials: credentials
+            );
+
             string tokenString = new JwtSecurityTokenHandler().WriteToken(tokenOptions);
             return Ok(new { token = tokenString });
         }
@@ -60,7 +74,7 @@ namespace ExcersiseTracker.Web.Controllers
         [Authorize]
         public User GetCurrentUser()
         {
-            string email = User.FindFirst(ClaimTypes.Email)?.Value; //get currently logged in users email - this is in place of User.Identity.Name
+            string email = User.FindFirst(ClaimTypes.Email)?.Value;
             if (String.IsNullOrEmpty(email))
             {
                 return null;
